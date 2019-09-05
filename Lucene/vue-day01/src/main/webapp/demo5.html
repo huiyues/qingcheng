@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<meta charset="utf-8" />
+		<title>v-on:事件修饰符</title>
+
+		<script src="js/vuejs-2.5.16.js"></script>
+	</head>
+
+	<body>
+	<div id="app">
+		<form @submit.prevent action="http://www.itheima.com" method="post" >
+			<input type="submit" value="提交">
+		</form>
+		<!--<form action="http://www.itheima.com" method="post" onsubmit="return checkForm()">
+            <input type="submit" value="提交">
+        </form>-->
+		<hr/>
+		<div @mouseover="fun1" id="div">
+			<textarea @mouseover.stop="fun2($event)">这是一个文件域</textarea>
+		</div>
+	</div>
+	</body>
+	<script>
+		//view model
+		
+		new Vue({
+
+
+		});
+		
+	</script>
+
+</html>

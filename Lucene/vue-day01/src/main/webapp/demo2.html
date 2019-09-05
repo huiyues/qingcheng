@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html xmlns:v-on="http://www.w3.org/1999/xhtml">
+	<head>
+		<meta charset="utf-8" />
+		<title>v-on:click</title>
+		<script src="js/vuejs-2.5.16.js"></script>
+	</head>
+	<body>
+		<div id="app">
+			{{message}}  
+			<button v-on:click="fun1('这是单击事件触发后的语句...')">vue的onclick</button>
+		</div>
+
+
+		<div id="app2">
+
+			<h1>{{msg}}</h1>
+			<h1>{{newMsg}}</h1>
+		</div>
+
+
+	</body>
+	<script>
+
+		var app = new Vue({
+			el:"#app2",
+			data:{
+			    msg:"这是动态数据测试hello"
+			},
+
+			computed:{
+			    newMsg:function (vue) {
+					console.log(11);
+					return vue.data.msg
+                }
+			}
+		});
+	</script>
+	<script>
+		//view model
+		new Vue({
+			el:"#app",  // 指定接管区域
+			data:{
+			    message:"这是显示 的主页内容"
+			},
+			methods:{  //点击事件之后执行的方法
+                fun1:function (msg) {
+                    this.message=msg   //修改当前点击的message参数值
+                }
+			}
+		});
+
+
+		//数据的绑定是单向的，视图中的数据改变不会同步给模型
+		//要想视图中的数据发生改变同步给模型，需要使用事件的监听
+
+
+	</script>
+</html> 

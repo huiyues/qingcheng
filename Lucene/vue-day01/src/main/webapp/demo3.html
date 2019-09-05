@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html xmlns:v-on="http://www.w3.org/1999/xhtml">
+
+	<head>
+		<meta charset="utf-8" />
+		<title>v-on:keydown</title>
+		<script src="js/vuejs-2.5.16.js"></script>
+	</head>
+
+	<body>
+		<div id="app">
+			<input type="text" v-on:keydown="fun($event)">
+		</div>
+	<div id="app2">
+		<input type="text" v-model="msg">
+		<h1>{{msg}}</h1>
+		<input type="text" v-model="title">
+		<h1>{{title}}</h1>
+	</div>
+	</body>
+	<script>
+
+		var date= {
+			msg:"数据双向绑定语法。。。",
+			title:'这是新添加的数据'
+        };
+
+		var  app = new Vue({
+			el:"#app2",
+			data:date
+		});
+
+
+
+		//view model
+		new Vue({
+			el:"#app",
+			methods:{
+				fun:function (event) {
+					var keyCode = event.keyCode;
+
+					if (keyCode < 48 || keyCode> 57){
+					    alert(keyCode);
+					}
+                }
+			}
+		});
+	</script>
+	
+	
+
+</html>

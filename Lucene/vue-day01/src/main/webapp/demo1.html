@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8" />
+		<title>快速入门</title>
+		<script src="js/vuejs-2.5.16.js"></script>
+	</head>
+	<body>
+		<div id="app">
+			接受的第一个插值: {{message}}<br>  <!--Vue的插值表达式，将data中的参数插入到div标签中-->
+
+			<!--可以进行三元运算-->
+			三元运算符：{{true ? '成功':'失败'}}<br>
+
+			<!--也可以接受数值插值-->
+			这是接受的数值参数: {{number}}
+
+			<!--不支持进行语句运算:错误写法-->
+			<!--{{var a = 100}}-->
+		</div>
+
+	<div id="app2">
+		这是新的语句写法：{{msg}}<br>
+	</div>
+	<h1>{{msg}}</h1>
+	<div class="title">{{msg}}</div>
+	</body>
+	<script>
+		//view model
+		new Vue({
+			el:"#app",   // 由Vue来接管id为app的标签
+			data:{
+			    message:"孤独的不是你，是黑夜...",  //插值,如果只有一个参数此处不要加分号\
+				number:100
+			}
+		})
+	</script>
+
+<script>
+
+	//第二种方式
+	var  date = {
+
+	    msg:'这是定义的第二条语句...',
+	    title:'这是新的写法...'
+
+	};
+
+	var  app = new Vue({
+		//可以绑定多个选择器，但是只会执行第一个
+		//el:'.title',
+		el:'h1',
+		//el:'#app2',
+		data:date
+	});
+
+	console.log(app)
+	//date.msg = '改变后的语句...';
+	//app.$data.msg = '尝试第三种改变方式.....'
+</script>
+</html>
