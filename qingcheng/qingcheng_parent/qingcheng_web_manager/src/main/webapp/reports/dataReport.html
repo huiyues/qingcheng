@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>流量统计</title>
+    <!-- 引入样式 -->
+    <link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css">
+    <link rel="stylesheet" href="../plugins/font-awesome/css/font-awesome.min.css">
+    <link rel="stylesheet" href="../css/style.css">
+    <script src="/js/echarts.common.min.js"></script>
+</head>
+<body>
+<script type="text/javascript" src="http://echarts.baidu.com/gallery/vendors/echarts/echarts.min.js"></script>
+<script type="text/javascript" src="http://echarts.baidu.com/gallery/vendors/echarts-gl/echarts-gl.min.js"></script>
+<script type="text/javascript" src="http://echarts.baidu.com/gallery/vendors/echarts-stat/ecStat.min.js"></script>
+<script type="text/javascript"
+        src="http://echarts.baidu.com/gallery/vendors/echarts/extension/dataTool.min.js"></script>
+<script type="text/javascript" src="http://echarts.baidu.com/gallery/vendors/echarts/map/js/china.js"></script>
+<script type="text/javascript" src="http://echarts.baidu.com/gallery/vendors/echarts/map/js/world.js"></script>
+<script type="text/javascript" src="http://echarts.baidu.com/gallery/vendors/echarts/extension/bmap.min.js"></script>
+<script type="text/javascript" src="http://echarts.baidu.com/gallery/vendors/simplex.js"></script>
+<!-- 为 ECharts 准备一个具备大小（宽高）的 DOM -->
+<div id="main" style="width: 500px;height:400px;float:left"></div>
+<div id="zx" style="width: 500px;height:400px;float:right;padding-right: 100px"></div>
+
+<div id="app">
+    <!--日期范围控件-->
+    <el-date-picker
+            v-model="dateRange"
+            type="daterange"
+            range-separator="至"
+            start-placeholder="开始日期"
+            end-placeholder="结束日期"
+            @change="fetchData()">
+    </el-date-picker>
+
+    <el-table
+            :data="tableData"
+            style="width: 100%">
+        <el-table-column
+                prop="browseNum"
+                label="浏览人数"
+                width="220">
+        </el-table-column>
+        <el-table-column
+                prop="placeNum"
+                label="下单人数"
+                width="220">
+        </el-table-column>
+        <el-table-column
+                prop="orderNum"
+                label="订单数"
+                width="220">
+        </el-table-column>
+        <el-table-column
+                prop="quantityNum"
+                label="下单件数"
+                width="220">
+        </el-table-column>
+        <el-table-column
+                prop="validNum"
+                label="有效订单数"
+                width="220">
+        </el-table-column>
+        <el-table-column
+                prop="belowMoney"
+                label="下单金额"
+                width="230">
+        </el-table-column>
+    </el-table>
+
+    <el-table
+            :data="tableData"
+            style="width: 100%">
+        <el-table-column
+                prop="retreatMoney"
+                label="退款金额"
+                width="220">
+        </el-table-column>
+        <el-table-column
+                prop="payPerson"
+                label="付款人数"
+                width="220">
+        </el-table-column>
+        <el-table-column
+                prop="payOrder"
+                label="付款订单数"
+                width="220">
+        </el-table-column>
+        <el-table-column
+                prop="payNum"
+                label="付款件数"
+                width="220">
+        </el-table-column>
+        <el-table-column
+                prop="payMoney"
+                label="付款金额"
+                width="220">
+        </el-table-column>
+        <el-table-column
+                prop="perMoney"
+                label="客单价"
+                width="230">
+        </el-table-column>
+    </el-table>
+</div>
+<script src="/js/vue.js"></script>
+<script src="/js/axios.js"></script>
+<script src="/js/util.js"></script>
+<script src="/js/elementui.js"></script>
+<script>
+    new Vue({
+        el: "#app",
+        data() {
+            return {
+                dateRange:['2019-5-16','2019-7-16'],
+                tableData: [],
+                totalNum: 0,
+                totalMoney: 0,
+                quantityNumTurn: 0,     //下单转化率
+                payMoneyTurn: 0,        //付款转换率
+                makedealTurn: 0         //成交转化率
+            }
+        },
+
+        methods: {
+            fetchData() {
+                axios.get('/categoryReport/findDataReport.do?startTime=2019-4-16&endTime=2019-5-16').then(response => {
+                    this.tableData = response.data;
+
+                    for (var i = 0; i < this.tableData.length; i++) {
+                        this.quantityNumTurn = (this.tableData[i].placeNum / this.tableData[i].browseNum) * 100;
+                        this.payMoneyTurn = (this.tableData[i].payPerson / this.tableData[i].placeNum) * 10;
+                        this.makedealTurn = (this.tableData[i].payPerson / this.tableData[i].browseNum) * 100;
+                    }
+
+                    // 基于准备好的dom，初始化echarts实例
+                    var myChart = echarts.init(document.getElementById('main'));
+
+                    //alert(quantityNumData)
+                    //漏斗图
+                    option = {
+                        title: {
+                            text: '漏斗图',
+                            subtext: '流量统计'
+                        },
+                        tooltip: {
+                            trigger: 'item',
+                            formatter: "{a} <br/>{b} : {c}%"
+                        },
+                        toolbox: {
+                            feature: {
+                                dataView: {readOnly: false},
+                                restore: {},
+                                saveAsImage: {}
+                            }
+                        },
+                        legend: {
+                            data: ['成交转化率', '下单转化率', '付款转化率']
+                        },
+                        calculable: true,
+                        series: [
+                            {
+                                name: '漏斗图',
+                                type: 'funnel',
+                                left: '10%',
+                                top: 60,
+                                //x2: 80,
+                                bottom: 60,
+                                width: '80%',
+                                // height: {totalHeight} - y - y2,
+                                min: 0,
+                                max: 100,
+                                minSize: '0%',
+                                maxSize: '100%',
+                                sort: 'descending',
+                                gap: 2,
+                                label: {
+                                    show: true,
+                                    position: 'inside'
+                                },
+                                labelLine: {
+                                    length: 10,
+                                    lineStyle: {
+                                        width: 1,
+                                        type: 'solid'
+                                    }
+                                },
+                                itemStyle: {
+                                    borderColor: '#fff',
+                                    borderWidth: 1
+                                },
+                                emphasis: {
+                                    label: {
+                                        fontSize: 20
+                                    }
+                                },
+                                data: [
+                                    {value: this.quantityNumTurn, name: '下单转化率'},
+                                    {value: this.makedealTurn, name: '成交转化率'},
+                                    {value: this.payMoneyTurn, name: '付款转化率'}
+                                ]
+                            }
+                        ]
+                    };
+                    // 使用刚指定的配置项和数据显示图表。
+                    myChart.setOption(option);
+
+
+                    // 基于准备好的dom，初始化echarts实例
+                    var zx = echarts.init(document.getElementById('zx'));
+
+                    var colors = ['#5793f3', '#d14a61', '#675bba'];
+
+                    //折线图
+                    let zxt = {
+                        color: colors,
+
+                        tooltip: {
+                            trigger: 'none',
+                            axisPointer: {
+                                type: 'cross'
+                            }
+                        },
+                        legend: {
+                            data: ['2017 流量统计', '2018 流量统计']
+                        },
+                        grid: {
+                            top: 70,
+                            bottom: 50
+                        },
+                        xAxis: [
+                            {
+                                type: 'category',
+                                axisTick: {
+                                    alignWithLabel: true
+                                },
+                                axisLine: {
+                                    onZero: false,
+                                    lineStyle: {
+                                        color: colors[1]
+                                    }
+                                },
+                                axisPointer: {
+                                    label: {
+                                        formatter: function (params) {
+                                            return '去年流量统计 ' + params.value
+                                                + (params.seriesData.length ? '：' + params.seriesData[0].data : '');
+                                        }
+                                    }
+                                },
+                                data: ["2017-1", "2017-2", "2017-3", "2017-4", "2017-5", "2017-6", "2017-7", "2017-8", "2017-9", "2017-10", "2017-11", "2017-12"]
+                            },
+                            {
+                                type: 'category',
+                                axisTick: {
+                                    alignWithLabel: true
+                                },
+                                axisLine: {
+                                    onZero: false,
+                                    lineStyle: {
+                                        color: colors[0]
+                                    }
+                                },
+                                axisPointer: {
+                                    label: {
+                                        formatter: function (params) {
+                                            return '今年流量统计  ' + params.value
+                                                + (params.seriesData.length ? '：' + params.seriesData[0].data : '');
+                                        }
+                                    }
+                                },
+                                data: ["2018-1", "2018-2", "2018-3", "2018-4", "2018-5", "2018-6", "2018-7", "2018-8", "2018-9", "2018-10", "2018-11", "2018-12"]
+                            }
+                        ],
+                        yAxis: [
+                            {
+                                type: 'value'
+                            }
+                        ],
+                        series: [
+                            {
+                                name: '2017 流量统计',
+                                type: 'line',
+                                xAxisIndex: 1,
+                                smooth: true,
+                                data: [50.6, 50.9, 100.0, 26.4, 23, 70.7, 100.6, 110.2, 48.7, 67.8, 6.0, 2.3]
+                            },
+                            {
+                                name: '2018 流量统计',
+                                type: 'line',
+                                smooth: true,
+                                data: [10, 50.10, 12.1, 40.7, 70.3, 10.2, 130.6, 60.6, 30.4, 20.4, 10.3, 0.7]
+                            }
+                        ]
+                    };
+                    // 使用刚指定的配置项和数据显示图表。
+                    zx.setOption(zxt)
+                });
+            }
+        },
+        created() {
+           // this.fetchData();
+        }
+    })
+</script>
+</body>
+</html>

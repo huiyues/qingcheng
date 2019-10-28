@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:v-bind="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="UTF-8">
+    <title>图片列表展示</title>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <!-- 引入样式 -->
+    <link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css">
+    <link rel="stylesheet" href="../plugins/font-awesome/css/font-awesome.min.css">
+    <link rel="stylesheet" href="../css/style.css">
+
+    <!-- 上传图片框样式，不使用上传组件可以删除此样式 -->
+    <style>
+        .avatar-uploader .el-upload {
+            border: 1px dashed #d9d9d9;
+            border-radius: 6px;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .avatar-uploader .el-upload:hover {
+            border-color: #409EFF;
+        }
+
+        .avatar-uploader-icon {
+            font-size: 28px;
+            color: #8c939d;
+            width: 150px;
+            height: 70px;
+            line-height: 150px;
+            text-align: center;
+        }
+
+        .avatar {
+            width: 150px;
+            height: 70px;
+            display: block;
+        }
+
+    </style>
+</head>
+<body class="hold-transition">
+<div id="app">
+
+    <div class="content-header">
+        <h1>管理
+            <small>图片列表展示</small>
+        </h1>
+        <el-breadcrumb separator-class="el-icon-arrow-right" class="breadcrumb">
+            <el-breadcrumb-item :to="{ path: '/' }">首页</el-breadcrumb-item>
+            <el-breadcrumb-item>管理</el-breadcrumb-item>
+            <el-breadcrumb-item>图片列表展示</el-breadcrumb-item>
+        </el-breadcrumb>
+    </div>
+
+    <div class="app-container">
+        <div class="box">
+            <div class="filter-container">
+                <el-button type="primary" class="butT" onclick="location.href='album.html'">返回相册</el-button>
+                <el-button type="primary" class="butT" @click="edit(templateId)">新增图片</el-button>
+                <el-button @click="edit(templateId)" size="mini" type="primary" size="small">修改封面</el-button>
+                </el-form>
+            </div>
+
+            <el-table
+                    :data="tableData"
+                    style="width: 100%"
+                    height="250">
+                <el-table-column>
+                    <template slot-scope="scope">
+                        <img width="200px" height="100px" :src="scope.row.image">
+                    </template>
+                </el-table-column>
+            </el-table>
+
+
+            <div class="demo-image__lazy">
+                <el-image v-for="url in urls" lazy>
+                    <span style="color:red;">&nbsp</span><img width="200px" height="100px" v-bind:src="url">
+                </el-image>
+            </div>
+
+            <!--弹出窗口-->
+            <el-dialog title="修改封面" :visible.sync="formVisible">
+                <el-form label-width="100px">
+
+                        <el-upload
+                                class="avatar-uploader"
+                                action="/upload/oss.do"
+                                :show-file-list="false"
+                                :on-success="handleAvatarSuccess"
+                                :before-upload="beforeAvatarUpload">
+                            <img v-if="imageUrl" :src="imageUrl" class="avatar">
+                            <i v-else class="el-icon-plus avatar-uploader-icon"></i>
+                        </el-upload>
+
+                        <el-form-item>
+                            <el-button type="primary" @click="save()">保存</el-button>
+                            <el-button @click="formVisible = false">关闭</el-button>
+                        </el-form-item>
+                    </el-form-item>
+                </el-form>
+
+            </el-dialog>
+
+
+            <el-dialog title="编辑" :visible.sync="imageVisible">
+                <el-form label-width="100px">
+                    <el-form-item label="图片">
+                        <el-upload
+                                class="upload-demo"
+                                action="https://jsonplaceholder.typicode.com/posts/"
+                                :on-preview="handlePreview"
+                                :on-remove="handleRemove"
+                                :file-list="fileList"
+                                list-type="picture">
+                            <el-button size="small" type="primary">点击上传</el-button>
+                            <div slot="tip" class="el-upload__tip"></div>
+                        </el-upload>
+
+                        <el-form-item>
+                            <el-button type="primary" @click="save()">保存</el-button>
+                            <el-button @click="imageVisible = false">关闭</el-button>
+                        </el-form-item>
+                    </el-form-item>
+                </el-form>
+
+            </el-dialog>
+        </div>
+
+    </div>
+</div>
+
+
+</div>
+</body>
+<script src="/js/vue.js"></script>
+<script src="/js/axios.js"></script>
+<script src="/js/elementui.js"></script>
+<script src="/js/util.js"></script>
+<script>
+    new Vue({
+        el: '#app',
+        data() {
+            return {
+                tableData: [],
+                searchMap: {},
+                pojo: {},
+                formVisible: false,
+                imageUrl: '',
+                templateId: 0,
+                imageVisible: false,
+                dialogImageUrl: '',
+                dialogImageVisible: false,
+                urls: []
+            }
+        },
+        created() {
+            this.urls = this.pojo.imageItems;
+
+            this.templateId = getQueryString("id");
+            this.fetchData();
+
+        },
+        methods: {
+            fetchData() {
+                axios.post(`/album/findPage.do`, this.searchMap).then(response => {
+                    this.tableData = response.data.rows;
+                });
+            },
+            save() {
+
+                if (this.pojo.id == null) {
+                    this.pojo.imageUrl.replace(/\n/g);
+                    this.pojo.imageItems = this.imageUrl;
+                }
+
+                this.pojo.image = this.imageUrl; //如页面有图片上传功能放开注释
+                axios.post(`/album/${this.pojo.id == null ? 'add' : 'update'}.do`, this.pojo).then(response => {
+                    this.fetchData(); //刷新列表
+                    this.formVisible = false;//关闭窗口
+                });
+            },
+            edit(id) {
+                 //this.imageVisible = true;
+                 this.formVisible = true;// 打开窗口
+                // 调用查询
+                axios.get(`/album/findById.do?id=${id}`).then(response => {
+                    this.pojo = response.data;
+                    this.imageUrl = this.pojo.image;                                //显示图片  如页面有图片上传功能放开注释
+                    this.urls = this.pojo.imageItems;
+                })
+            },
+            dele(id) {
+                this.$confirm('确定要删除此记录吗?', '提示', {
+                    confirmButtonText: '确定',
+                    cancelButtonText: '取消',
+                    type: 'warning'
+                }).then(() => {
+                    axios.get(`/album/delete.do?id=${id}`).then(response => {
+                        this.fetchData(); //刷新列表
+                    })
+                })
+            },
+
+
+            list(id) {
+                location.href = "album_list.html?id=" + id;
+            },
+
+            handleAvatarSuccess(res, file) {
+                this.imageUrl = file.response;
+            },
+            beforeAvatarUpload(file) {
+                const isJPG = file.type === 'image/jpeg';
+                const isLt2M = file.size / 1024 / 1024 < 2;
+
+                if (!isJPG) {
+                    this.$message.error('上传头像图片只能是 JPG 格式!');
+                }
+                if (!isLt2M) {
+                    this.$message.error('上传头像图片大小不能超过 2MB!');
+                }
+                return isJPG && isLt2M;
+            },
+
+            handleRemove(file, fileList) {
+                console.log(file, fileList);
+            },
+            handlePreview(file) {
+                console.log(file);
+            }
+        }
+    })
+</script>
+</html>

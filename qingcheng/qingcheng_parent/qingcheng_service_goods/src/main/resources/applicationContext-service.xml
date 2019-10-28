@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:tx="http://www.springframework.org/schema/tx"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-4.2.xsd
+	http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx.xsd">
+
+    <!--雪花分布式id算法-->
+    <bean id="idWorker" class="com.qingcheng.utils.IdWorker">
+	<constructor-arg index="0" value="1"/>
+	<constructor-arg index="1" value="1"/>
+    </bean>
+
+    <!--配置rest高级工厂类-->
+    <bean id="restClientFactory" class="com.qingcheng.service.impl.RestClientFactory" factory-method="getRestHighLeveClinet">
+        <constructor-arg index="0" value="localhost"/>
+        <constructor-arg index="1" value="9200"/>
+    </bean>
+</beans>

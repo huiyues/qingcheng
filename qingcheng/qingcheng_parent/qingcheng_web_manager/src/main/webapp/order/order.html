@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>订单管理</title>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <!-- 引入样式 -->
+    <link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css">
+    <link rel="stylesheet" href="../plugins/font-awesome/css/font-awesome.min.css">
+    <link rel="stylesheet" href="../css/style.css">
+
+    <!-- 上传图片框样式，不使用上传组件可以删除此样式 -->
+    <style>
+        .avatar-uploader .el-upload {
+            border: 1px dashed #d9d9d9;
+            border-radius: 6px;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .avatar-uploader .el-upload:hover {
+            border-color: #409EFF;
+        }
+
+        .avatar-uploader-icon {
+            font-size: 28px;
+            color: #8c939d;
+            width: 150px;
+            height: 70px;
+            line-height: 150px;
+            text-align: center;
+        }
+
+        .avatar {
+            width: 150px;
+            height: 70px;
+            display: block;
+        }
+
+    </style>
+</head>
+<body class="hold-transition">
+<div id="app">
+
+    <div class="content-header">
+        <h1>管理
+            <small>订单管理</small>
+        </h1>
+        <el-breadcrumb separator-class="el-icon-arrow-right" class="breadcrumb">
+            <el-breadcrumb-item :to="{ path: '/' }">首页</el-breadcrumb-item>
+            <el-breadcrumb-item>订单管理</el-breadcrumb-item>
+            <el-breadcrumb-item>订单管理</el-breadcrumb-item>
+        </el-breadcrumb>
+    </div>
+
+    <div class="app-container">
+        <div class="box">
+            <div class="filter-container">
+
+                <!--查询表单-->
+                <el-form :inline="true">
+
+                    <el-form-item label="物流名称">
+                        <el-input v-model="searchMap.shippingName" placeholder="物流名称" class="filter-item"></el-input>
+                    </el-form-item>
+                    <el-form-item label="收货人手机">
+                        <el-input v-model="searchMap.receiverMobile" placeholder="收货人手机" class="filter-item"></el-input>
+                    </el-form-item>
+
+                    <el-button type="primary" @click="fetchData()" icon="el-icon-search">搜索</el-button>
+                    <el-button type="primary" class="butT" @click="formVisible=true;pojo={}">新增</el-button>
+                </el-form>
+            </div>
+
+            <!--功能按钮-->
+            <el-row>
+                <el-button size="mini" @click="splitVisible=true" round>拆分订单</el-button>
+                <el-button size="mini" @click="mergeVisible=true" round>合并订单</el-button>
+                <el-button size="mini" round>打印发货单</el-button>
+                <el-button size="mini" @click="findOrderIds()" round>批量发货</el-button>
+                <el-button size="mini" round>导出订单</el-button>
+            </el-row>
+
+            <!--数据表格-->
+            <el-table @selection-change="handleSelectionChange" ref="multipleTable" :data="tableData" height="500px"
+                      border style="width: 100%">
+                <el-table-column
+                        type="selection"
+                        width="55">
+                </el-table-column>
+                <el-table-column prop="id" label="订单id" fixed width="200"></el-table-column>
+                <el-table-column prop="totalNum" label="数量合计" width="80"></el-table-column>
+                <el-table-column prop="totalMoney" label="金额合计" width="80"></el-table-column>
+                <el-table-column prop="payType" label="支付类型" width="80"></el-table-column>
+                <el-table-column prop="createTime" label="订单创建时间" width="190"></el-table-column>
+                <el-table-column prop="payTime" label="付款时间" width="190"></el-table-column>
+                <el-table-column prop="shippingCode" label="物流单号" width="80"></el-table-column>
+                <el-table-column prop="shippingName" label="物流名称" width="80"></el-table-column>
+                <el-table-column prop="consignTime" label="发货时间" width="80"></el-table-column>
+                <el-table-column prop="receiverContact" label="收货人" width="80"></el-table-column>
+                <el-table-column prop="receiverAddress" label="收货人地址" width="130"></el-table-column>
+                <el-table-column prop="orderStatus" label="订单状态" width="80"></el-table-column>
+                <el-table-column prop="payStatus" label="支付状态" width="80"></el-table-column>
+                <el-table-column prop="consignStatus" label="发货状态" width="80"></el-table-column>
+
+                <el-table-column align="center" width="250px"
+                                 label="操作">
+                    <template slot-scope="scope">
+                        <el-button @click="" size="mini" type="primary" size="small">查看详情</el-button>
+                        <el-button @click="edit(scope.row.id)" size="mini" type="primary" size="small">修改</el-button>
+                        <el-button @click="dele(scope.row.id)" size="mini" type="danger" size="small">删除</el-button>
+                    </template>
+                </el-table-column>
+            </el-table>
+            <div class="pagination-container">
+                <el-pagination
+                        class="pagiantion"
+                        @size-change="fetchData"
+                        @current-change="fetchData"
+                        :current-page.sync="currentPage"
+                        :page-sizes="[10, 20, 30, 40]"
+                        :page-size="size"
+                        layout="total, sizes, prev, pager, next, jumper"
+                        :total="total">
+                </el-pagination>
+            </div>
+
+            <div class="add-form">
+
+
+                <!--弹出窗口-->
+                <el-dialog title="编辑" :visible.sync="formVisible">
+                    <el-form label-width="80px">
+                        <el-form-item label="优惠金额">
+                            <el-input v-model="pojo.preMoney"></el-input>
+                        </el-form-item>
+                        <el-form-item label="邮费">
+                            <el-input v-model="pojo.postFee"></el-input>
+                        </el-form-item>
+                        <el-form-item label="支付类型">
+                            <template>
+                                <el-select v-model="pojo.payType" filterable placeholder="请选择">
+                                    <el-option
+                                            v-for="item in payTypeList"
+                                            :key="item.id"
+                                            :label="item.name"
+                                            :value="item.name">
+                                    </el-option>
+                                </el-select>
+                            </template>
+                            </el-input></el-form-item>
+                        <el-form-item label="物流名称">
+                            <el-input v-model="pojo.shippingName"></el-input>
+                        </el-form-item>
+                        <el-form-item label="物流单号">
+                            <el-input v-model="pojo.shippingCode"></el-input>
+                        </el-form-item>
+                        <el-form-item label="收货人">
+                            <el-input v-model="pojo.receiverContact"></el-input>
+                        </el-form-item>
+                        <el-form-item label="收货人手机">
+                            <el-input v-model="pojo.receiverMobile"></el-input>
+                        </el-form-item>
+                        <el-form-item label="收货人地址">
+                            <el-input v-model="pojo.receiverAddress"></el-input>
+                        </el-form-item>
+                        <el-form-item label="订单来源">
+                            <template>
+                                <el-select v-model="pojo.source_type" filterable placeholder="请选择">
+                                    <el-option
+                                            v-for="item in sourceTypeList"
+                                            :key="item.id"
+                                            :label="item.name"
+                                            :value="item.id">
+                                    </el-option>
+                                </el-select>
+                            </template>
+                        </el-form-item>
+                        <el-form-item label="交易流水号">
+                            <el-input v-model="pojo.transactionId"></el-input>
+                        </el-form-item>
+                        <el-form-item label="订单状态">
+                            <el-input v-model="pojo.orderStatus"></el-input>
+                        </el-form-item>
+                        <el-form-item label="支付状态">
+                            <el-input v-model="pojo.payStatus"></el-input>
+                        </el-form-item>
+                        <el-form-item label="发货状态">
+                            <el-input v-model="pojo.consignStatus"></el-input>
+                        </el-form-item>
+                        <el-form-item label="是否删除">
+                            <el-input v-model="pojo.isDelete"></el-input>
+                        </el-form-item>
+                        <el-form-item>
+                            <el-button type="primary" @click="save()">保存</el-button>
+                            <el-button @click="formVisible = false">关闭</el-button>
+                        </el-form-item>
+                    </el-form>
+                </el-dialog>
+
+                <!--发货弹窗-->
+                <el-dialog title="发货" :visible.sync="SaveVisible">
+
+                    <el-table :data="shipmentsData"
+                              border style="width: 100%">
+                        <el-table-column
+                                type="selection"
+                                width="55">
+                        </el-table-column>
+                        <el-table-column v-model="pojo.id" prop="id" label="订单id" width="200"></el-table-column>
+                        <el-table-column v-model="pojo.receiverContact" prop="receiverContact" label="收货人"
+                                         width="80"></el-table-column>
+                        <el-table-column v-model="pojo.receiverAddress" prop="receiverAddress" label="收货人地址"
+                                         width="130"></el-table-column>
+                        <el-table-column v-model="pojo.orderStatus" prop="orderStatus" label="订单状态"
+                                         width="80"></el-table-column>
+                        <el-table-column v-model="pojo.payStatus" prop="payStatus" label="支付状态"
+                                         width="80"></el-table-column>
+                        <el-table-column prop="shippingName" label="物流名称" width="80">
+                            <template>
+                                <el-select v-model="pojo.shippingName" filterable placeholder="请选择">
+                                    <el-option
+                                            v-for="item in payTypeList"
+                                            :key="item.id"
+                                            :label="item.name"
+                                            :value="item.name">
+                                    </el-option>
+                                </el-select>
+                            </template>
+                        </el-table-column>
+                        <el-table-column prop="shippingCode" v-model="pojo.shippingCode" label="物流单号"
+                                         width="80"></el-table-column>
+                    </el-table>
+
+
+                    <el-button @click="SaveVisible = false">发货</el-button>
+                    <el-button type="primary" @click="SaveVisible = false">关闭</el-button>
+                    </span>
+                </el-dialog>
+
+                <!--合并订单-->
+                <el-dialog title="合并订单" :visible.sync="mergeVisible">
+                    <el-form align="center" ref="form" label-width="80px">
+                        <el-form-item>
+
+                        </el-form-item>
+
+                        <el-form-item label="主订单">
+                            <template>
+                                <el-select v-model="orderId2" filterable placeholder="请选择">
+                                    <el-option
+                                            v-for="item in findData"
+                                            :key="item.id"
+                                            :label="item.id"
+                                            :value="item.id">
+                                    </el-option>
+                                </el-select>
+                            </template>
+                        </el-form-item>
+                        <el-form-item label="从订单">
+                            <template>
+                                <el-select v-model="orderId1" filterable placeholder="请选择">
+                                    <el-option
+                                            v-for="item in findData"
+                                            :key="item.id"
+                                            :label="item.id"
+                                            :value="item.id">
+                                    </el-option>
+                                </el-select>
+                            </template>
+
+                        </el-form-item>
+                        <el-form-item>
+                        </el-form-item>
+                    </el-form>
+                    <el-button @click="merge()">合并</el-button>
+                    <el-button type="primary" @click="mergeVisible = false">关闭</el-button>
+                    </span>
+                </el-dialog>
+
+                <!--拆分订单-->
+                <el-dialog title="拆分订单" :visible.sync="splitVisible">
+
+                    <el-form :inline="true">
+                        <el-form-item label="请输入要拆分的订单：">
+                            <el-input v-model="orderOneId" placeholder="订单id"
+                                      class="filter-item"></el-input>
+                        </el-form-item>
+                        <el-button type="primary" @click="findOrder()" icon="el-icon-search">搜索</el-button>
+                    </el-form>
+
+                    <el-table :data="shipmentsData"
+                              border style="width: 100%">
+                        <el-table-column v-model="shipmentsData.id" prop="id" label="订单id"
+                                         width="200"></el-table-column>
+                        <el-table-column width="200" prop="name" label="商品名称"
+                                         width="80"></el-table-column>
+                        <el-table-column prop="price" width="100" label="价格"
+                                         width="130"></el-table-column>
+                        <el-table-column prop="num" width="100" label="数量"
+                                         width="80"></el-table-column>
+                        <el-table-column prop="money" width="100" label="总金额"
+                                         width="80"></el-table-column>
+                        <el-table-column prop="money" width="100" label="拆分数量"
+                                         width="80">
+
+                        </el-table-column>
+
+                    </el-table>
+                    <el-input v-model="shipmentsData.num" placeholder="请输入拆分数量"></el-input>
+
+                    <el-button @click="split()">拆分</el-button>
+                    <el-button type="primary" @click="splitVisible = false">关闭</el-button>
+                    </span>
+                </el-dialog>
+
+            </div>
+
+        </div>
+    </div>
+
+
+</div>
+</body>
+<script src="/js/vue.js"></script>
+<script src="/js/axios.js"></script>
+<script src="/js/elementui.js"></script>
+<script>
+    new Vue({
+        el: '#app',
+        data() {
+            return {
+                tableData: [],
+                currentPage: 1,
+                total: 10,
+                size: 10,
+                searchMap: {},
+                pojo: {},
+                formVisible: false,
+                payTypeList: [],
+                sourceTypeList: [],
+                multipleSelection: [],
+                ids: {},
+                SaveVisible: false,
+                mergeVisible: false,
+                splitVisible: false,
+                shipmentsData: [],
+                orderId1: '',
+                orderId2: '',
+                orderOneId: '',
+                findData:[]
+            }
+        },
+        created() {
+            this.payTypeList = [{id: 0, name: '货到付款'}, {id: 2, name: '微信支付'}, {id: 3, name: '支付宝'}, {
+                id: 4,
+                name: '银联支付'
+            }];
+            this.sourceTypeList = [{id: '1', name: 'web'}, {id: '2', name: 'app'}, {id: '3', name: '微信公众号'}, {
+                id: '4',
+                name: '微信小程序'
+            }, {id: '5', name: 'H5手机页面'}];
+
+            this.findAll();
+            this.fetchData();
+        },
+        methods: {
+
+            findAll(){
+              axios.get(`/order/findAll.do`).then(response=>{
+                  this.findData = response.data;
+              });
+            },
+
+            fetchData() {
+                axios.post(`/order/findPage.do?page=${this.currentPage}&size=${this.size}`, this.searchMap).then(response => {
+                    this.tableData = response.data.rows;
+                    this.total = response.data.total;
+                });
+            },
+            save() {
+
+                axios.post(`/order/${this.pojo.id == null ? 'add' : 'update'}.do`, this.pojo).then(response => {
+                    this.fetchData(); //刷新列表
+                    this.formVisible = false;//关闭窗口
+                });
+            },
+            edit(id) {
+                this.formVisible = true; // 打开窗口
+                // 调用查询
+                axios.get(`/order/findById.do?id=${id}`).then(response => {
+                    this.pojo = response.data;
+
+                })
+            },
+            dele(id) {
+                this.$confirm('确定要删除此记录吗?', '提示', {
+                    confirmButtonText: '确定',
+                    cancelButtonText: '取消',
+                    type: 'warning'
+                }).then(() => {
+                    axios.get(`/order/delete.do?id=${id}`).then(response => {
+                        this.fetchData(); //刷新列表
+                    })
+                })
+            },
+
+            findOrderIds() {
+                axios.post(`/order/findOrderIds.do`, this.ids).then(response => {
+                    this.shipmentsData = response.data;
+                    this.SaveVisible = true;
+                });
+            },
+
+            findOrder() {
+                axios.get(`/order/findOrder.do?id=${this.orderOneId}`).then(response => {
+                    this.shipmentsData = response.data.orderItemList;
+
+                })
+            },
+
+            split() {
+                this.splitVisible = false;
+                axios.post(`/order/split.do`, this.shipmentsData).then(response => {
+                    this.id = response.data;
+                    alert("拆分成功，简直太棒了...")
+                });
+            },
+
+            merge(){
+                this.mergeVisible = false
+                axios.get(`/order/merge.do?orderId1=${this.orderId1}&orderId2=${this.orderId2}`).then(response=>{
+                        alert("订单合并成功....真棒!")
+                });
+            },
+
+            toggleSelection(rows) {
+                if (rows) {
+                    rows.forEach(row => {
+                        this.$refs.multipleTable.toggleRowSelection(row);
+                    });
+                } else {
+                    this.$refs.multipleTable.clearSelection();
+                }
+            },
+            handleSelectionChange(val) {
+                this.multipleSelection = val;
+                let selectIds = [];
+                this.multipleSelection.map((item) => {
+                    selectIds.push(item.id)
+                });
+                this.ids = selectIds
+            }
+        }
+    })
+</script>
+</html>

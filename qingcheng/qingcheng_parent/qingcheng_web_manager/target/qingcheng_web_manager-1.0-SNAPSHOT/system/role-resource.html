@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>role管理</title>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <!-- 引入样式 -->
+    <link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css">
+    <link rel="stylesheet" href="../plugins/font-awesome/css/font-awesome.min.css">
+    <link rel="stylesheet" href="../css/style.css">
+
+    <!-- 上传图片框样式，不使用上传组件可以删除此样式 -->
+    <style>
+        .avatar-uploader .el-upload {
+            border: 1px dashed #d9d9d9;
+            border-radius: 6px;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .avatar-uploader .el-upload:hover {
+            border-color: #409EFF;
+        }
+
+        .avatar-uploader-icon {
+            font-size: 28px;
+            color: #8c939d;
+            width: 150px;
+            height: 70px;
+            line-height: 150px;
+            text-align: center;
+        }
+
+        .avatar {
+            width: 150px;
+            height: 70px;
+            display: block;
+        }
+
+    </style>
+</head>
+<body class="hold-transition">
+<div id="app">
+
+    <div class="content-header">
+        <h1>管理
+            <small>权限设置</small>
+        </h1>
+        <el-breadcrumb separator-class="el-icon-arrow-right" class="breadcrumb">
+            <el-breadcrumb-item :to="{ path: '/' }">首页</el-breadcrumb-item>
+            <el-breadcrumb-item>管理</el-breadcrumb-item>
+            <el-breadcrumb-item>权限设置</el-breadcrumb-item>
+        </el-breadcrumb>
+    </div>
+    <div class="app-container">
+        <div class="box">
+            <div class="filter-container">
+                <el-button type="primary" class="butT" @click="formVisible=true;pojo={}">新增</el-button>
+            </div>
+            <div v-if="loading">
+                <checkbox-component :select-item="item" v-for="(item,index) in selectItemList"
+                                    :key="index" @selectedchange="selectedHandle">
+
+
+                </checkbox-component>
+            </div>
+            <div style="width: 100%; height: 30px; display: flex; flex-direction: row; justify-content: center; align-items: center">
+                <el-button type="primary" @click="submit">保&nbsp;存</el-button>
+                <el-button type="primary" onclick="location.href='/system/role.html'">返&nbsp;回</el-button>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+<script src="/js/vue.js"></script>
+<script src="/js/axios.js"></script>
+<script src="/js/elementui.js"></script>
+<script src="/js/util.js"></script>
+<script>
+    Vue.component('CheckboxComponent', {
+        props: {
+            selectItem: {}
+        },
+        created() {
+            // console.log(`子组件resourcesPojo:${JSON.stringify(this.resourcePojo.children)}`);
+            // console.log(`子组件resList:${JSON.stringify(this.resourcePojo.children.map(r=>r.id))}`);
+            this.resourceItem = this.selectItem.resource;
+            this.resList = this.selectItem.resource.parentId.map(r => r.id);
+            this.checkedRes = this.selectItem.selected.map(r => r.id);
+            if (this.checkedRes.length > 0 && this.checkedRes.length < this.resList.length) {
+                this.isIndeterminate = true;
+            }
+            if (this.checkedRes.length > 0 && this.checkedRes.length === this.resList.length) {
+                this.checkAll = true;
+            }
+            if (this.checkedRes.length > 0) {
+                this.$emit('selectedchange', {index: this.resourceItem.id, data: this.checkedRes});
+            }
+        },
+        data() {
+            return {
+                resourceItem: {},
+                checkAll: false,
+                checkedRes: [],
+                resList: [],
+                isIndeterminate: false
+            }
+        },
+        template: `<el-card style="margin: 20px">
+                <div slot="header">
+                    <el-checkbox :indeterminate="isIndeterminate" v-model="checkAll" @change="handleCheckAllChange">
+                    {{resourceItem.resName}}
+                    </el-checkbox>
+                </div>
+                <el-checkbox-group v-model="checkedRes" @change="handleCheckedCitiesChange">
+                    <el-checkbox v-for="item in resourceItem.parentId" :label="item.id" :key="item.id">{{item.resName}}
+                    </el-checkbox>
+                </el-checkbox-group>
+            </el-card>`,
+        methods: {
+            handleCheckAllChange(val) {
+                this.checkedRes = val ? this.resList : [];
+                this.isIndeterminate = false;
+                this.$emit('selectedchange', {index: this.resourceItem.id, data: this.checkedRes});
+            },
+            handleCheckedCitiesChange(value) {
+                let checkedCount = value.length;
+                this.checkAll = checkedCount === this.resList.length;
+                this.isIndeterminate = checkedCount > 0 && checkedCount < this.resList.length;
+                this.$emit('selectedchange', {index: this.resourceItem.id, data: this.checkedRes});
+            }
+        }
+    });
+    new Vue({
+        el: '#app',
+        data() {
+            return {
+                loading: false,
+                role: {},
+                resources: [],
+                selectItemList: [],
+                selectedResources: [],
+                roleId:'',
+            }
+        },
+        created() {
+            this.roleId = getQueryString("roleId");
+            this.fetchData();
+        },
+        methods: {
+            fetchData() {
+                axios.all([this.findRole(this.roleId), this.findAllResources()])
+                    .then(axios.spread((response1, response2) => {
+                        this.role = response1.data;
+                        this.resources = response2.data;
+                        this.loading = true;
+                        this.selectItemList = this.resources.map(r => {
+                            let selectItem = {
+                                resource: {},
+                                selected: []
+                            };
+                            selectItem.resource = r;
+                            selectItem.selected = this.role.resourceList.filter(res => res.parentId === r.id);
+                            return selectItem;
+                        });
+                    }));
+            },
+            findRole(roleId) {
+                return axios.get(`/role/findByRoleId.do?id=${roleId}`);
+            },
+            findAllResources() {
+                return axios.get(`/resource/findByResource.do`);
+            },
+            selectedHandle(val) {
+                if (this.selectedResources.length < 1 || !this.selectedResources.find(value => value.index === val.index)) {
+                    this.selectedResources = [...this.selectedResources, val];
+                } else {
+                    this.selectedResources = this.selectedResources.map(s => {
+                        if (s.index === val.index) {
+                            s.data = val.data;
+                        }
+                        return s;
+                    });
+                }
+
+                console.log(JSON.stringify(this.selectedResources));
+            },
+            submit() {
+                let sle = this.selectedResources.map(s => s.data).reduce((acc, cur) => acc.concat(cur), []);
+                console.log(JSON.stringify(sle));
+
+                let params = getUrl(sle, 'resIds');
+                axios.get(`/role/addRoleId.do?roleId=${this.roleId}&${params}`)
+                    .then(() => {
+                        this.selectedResources = [];
+                        location.href = `/system/role.html`;
+                    });
+            }
+        }
+
+    })
+</script>
+<script>
+    // 拼接get方式的url地址
+    function getUrl(value, keyword) {
+        let params = '';
+        value.forEach(r => params += `${keyword}=${r}&`);
+        return params.substr(0, params.length - 1);
+    }
+
+</script>
+</html>

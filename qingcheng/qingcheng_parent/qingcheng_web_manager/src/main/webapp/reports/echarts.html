@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>商品类目统计</title>
+
+    <!--  <!‐‐ 引入样式 ‐‐>-->
+        
+    <!-- 引入样式 -->
+    <link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css">
+    <link rel="stylesheet" href="../plugins/font-awesome/css/font-awesome.min.css">
+    <link rel="stylesheet" href="../css/style.css">
+    <!-- 引入 ECharts 文件 -->
+    <script src="/js/echarts.common.min.js"></script>
+
+
+</head>
+<script src="/js/util.js"></script>
+<script src="/js/vue.js"></script>
+<script src="/js/axios.js"></script>
+<script src="/js/elementui.js"></script>
+
+<body>
+
+<div id="app">
+    <!--table表格-->
+    <el-table
+            :data="tableData"
+            height="400"
+            border
+            style="width: 100%">
+        <el-table-column
+                prop="browseNum"
+                label="访问数量"
+                width="200">
+        </el-table-column>
+        <el-table-column
+                prop="placeNum"
+                label="下单人数"
+                width="200">
+        </el-table-column>
+        <el-table-column
+                prop="orderNum"
+                label="订单数量"
+                width="200">
+            </template>
+        </el-table-column>
+        <el-table-column
+                prop="quantityNum"
+                label="下单件数"
+                width="200">
+        </el-table-column>
+        <el-table-column
+                prop="belowMoney"
+                label="下单金额"
+                width="">
+        </el-table-column>
+    </el-table>
+    <el-table
+            :data="tableData"
+            height="400"
+            border
+            style="width: 100%">
+        <el-table-column
+                prop="retreatMoney"
+                label="退款金额"
+                width="180">
+        </el-table-column>
+        <el-table-column
+                prop="payPerson"
+                label="付款人数"
+                width="180">
+        </el-table-column>
+        <el-table-column
+                prop="payNum"
+                label="付款订单"
+                width="180">
+        </el-table-column>
+        <el-table-column
+                prop="payMoney"
+                label="订单件数"
+                width="180">
+        </el-table-column>
+        <el-table-column
+                prop="perMoney"
+                label="付款金额"
+                width="180">
+        </el-table-column>
+        <el-table-column
+                prop="validNum"
+                label="客单价"
+                width="180">
+        </el-table-column>
+    </el-table>
+    <div id="main" style="width: 600px;height:400px;"></div>
+</div>
+
+<script>
+
+    new Vue({
+        el: '#app',
+        data() {
+            return {
+                tableData:[],
+                dateRange: [],
+                totalNum: 0,
+                totalMoney: 0
+            }
+        },
+
+        created() {
+            this.fetchData();
+        },
+
+        methods: {
+            fetchData() {
+                axios.get(`/categoryReport/findDataReport.do`).then(response => {
+                    this.tableData = response.data;
+                    //alert( this.tableData.browseNum)
+                })
+            }
+        },
+    });
+
+    let myChart = echarts.init(document.getElementById('main'));
+    let option = {
+        title: {
+            text: '漏斗图',
+            subtext: '纯属虚构'
+        },
+        tooltip: {
+            trigger: 'item',
+            formatter: "{a} <br/>{b} : {c}%"
+        },
+        toolbox: {
+            feature: {
+                dataView: {readOnly: false},
+                restore: {},
+                saveAsImage: {}
+            }
+        },
+        legend: {
+            data: ['展现','点击','访问','咨询','订单']
+        },
+        calculable: true,
+        series: [
+            {
+                name:'漏斗图',
+                type:'funnel',
+                left: '10%',
+                top: 60,
+                //x2: 80,
+                bottom: 60,
+                width: '80%',
+                // height: {totalHeight} - y - y2,
+                min: 0,
+                max: 100,
+                minSize: '0%',
+                maxSize: '100%',
+                sort: 'descending',
+                gap: 2,
+                label: {
+                    show: true,
+                    position: 'inside'
+                },
+                labelLine: {
+                    length: 10,
+                    lineStyle: {
+                        width: 1,
+                        type: 'solid'
+                    }
+                },
+                itemStyle: {
+                    borderColor: '#fff',
+                    borderWidth: 1
+                },
+                emphasis: {
+                    label: {
+                        fontSize: 20
+                    }
+                },
+                data: [
+                    {value: 60, name: '访问'},
+                    {value: 40, name: '咨询'},
+                    {value: 20, name: '订单'},
+                    {value: 80, name: '点击'},
+                    {value: 100, name: '展现'}
+                ]
+            }
+        ]
+    };
+    // 使用刚指定的配置项和数据显示图表。
+    myChart.setOption(option);
+
+</script>
+</body>
+</html>
