@@ -118,5 +118,9 @@ public class ListDemo {
     public void test(){
         int i = 123456789;
         System.out.println(i % 100);
+
+        Hashtable hashtable = new Hashtable();
+        HashMap hashMap = new HashMap<>();
+
     }
 }

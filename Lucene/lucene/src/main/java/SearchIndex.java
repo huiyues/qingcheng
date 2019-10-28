@@ -6,6 +6,8 @@ import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.*;
 import org.apache.lucene.store.FSDirectory;
+
+
 import org.junit.Before;
 import org.junit.Test;
 import org.wltea.analyzer.lucene.IKAnalyzer;

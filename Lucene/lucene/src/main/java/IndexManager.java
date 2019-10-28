@@ -1,8 +1,8 @@
 import org.apache.lucene.document.*;
 import org.apache.lucene.index.*;
 import org.apache.lucene.search.*;
-import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.wltea.analyzer.lucene.IKAnalyzer;
@@ -20,6 +20,13 @@ public class IndexManager {
                 new IndexWriterConfig(new IKAnalyzer()));
     }
 
+
+    @After
+    public void after() throws IOException {
+        indexWriter.close();
+    }
+
+
     @Test
     public void testIndexManager() throws Exception {
         //创建indexWrite并且要以IKAnalyzer作为解析器
@@ -36,21 +43,18 @@ public class IndexManager {
         //将文档对象写入到索引库
         indexWriter.addDocument(document);
 
-        indexWriter.close();
     }
 
     //删除所有
     @Test
     public void testDelete() throws IOException {
         indexWriter.deleteAll();
-        indexWriter.close();
     }
 
     //删除指定的名称的文档对象
     @Test
     public void testDeleteId() throws IOException {
      indexWriter.deleteDocuments(new Term("name","apache"));
-     indexWriter.close();
     }
 
 
@@ -63,7 +67,6 @@ public class IndexManager {
      document.add(new TextField("name3","这是更新之后的内容3",Field.Store.YES));
 
      indexWriter.updateDocument(new Term("name","spring"),document );
-     indexWriter.close();
     }
 
 
@@ -89,6 +92,5 @@ public class IndexManager {
             System.out.println(document.get("size"));
             System.out.println("------------------华丽的分割线");
         }
-        indexReader.close();
     }
 }

@@ -9,9 +9,11 @@ import org.apache.lucene.search.*;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 import org.junit.Test;
+import org.wltea.analyzer.lucene.IKAnalyzer;
+
 import java.io.File;
 import java.io.IOException;
-import org.wltea.analyzer.lucene.IKAnalyzer;
+
 
 public class CreateIndex {
 
@@ -103,7 +105,7 @@ public class CreateIndex {
         TokenStream tokenStream = analyzer.tokenStream("", "The Spring Framework provides a comprehensive programming and configuration model.");
         //设置引用
         CharTermAttribute charTermAttribute = tokenStream.addAttribute(CharTermAttribute.class);
-        //不调用此方法则抛异常
+        //设置指针从头部开始
         tokenStream.reset();
         //遍历获取列表数据
         while (tokenStream.incrementToken()){
@@ -181,5 +183,35 @@ public class CreateIndex {
         }
 
         indexWriter.close();
+    }
+
+    @Test
+    public void test4() throws IOException {
+        Analyzer analyzer = new IKAnalyzer();
+        TokenStream tokenStream = analyzer.tokenStream("", "The Spring Framework provides a comprehensive programming and configuration model.");
+        CharTermAttribute charTermAttribute = tokenStream.addAttribute(CharTermAttribute.class);
+
+
+        tokenStream.reset();
+        while (tokenStream.incrementToken()){
+            System.out.println(charTermAttribute.toString());
+        }
+
+        tokenStream.close();
+    }
+
+
+    @Test
+    public void test5() throws IOException {
+      Analyzer analyzer = new StandardAnalyzer();
+        TokenStream tokenStream = analyzer.tokenStream("name", "The Spring Framework provides a comprehensive programming and configuration model.");
+        CharTermAttribute charTermAttribute = tokenStream.addAttribute(CharTermAttribute.class);
+
+        tokenStream.reset();
+        while (tokenStream.incrementToken()){
+            System.out.println(charTermAttribute.toString());
+        }
+
+        tokenStream.close();
     }
 }

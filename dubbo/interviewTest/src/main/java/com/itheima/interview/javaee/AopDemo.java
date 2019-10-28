@@ -1,29 +1,41 @@
 package com.itheima.interview.javaee;
 
+import javafx.concurrent.Worker;
+import org.junit.Test;
+import org.springframework.jdbc.datasource.DataSourceTransactionManager;
+import org.springframework.transaction.PlatformTransactionManager;
+
 import java.net.URL;
 import java.net.URLConnection;
+import java.util.List;
+import java.util.concurrent.Executors;
+import java.util.concurrent.locks.AbstractQueuedSynchronizer;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * @author heiye
  * @date 2019-08-10 13:04
  * <p>
- * 什么是Aop ？
- * aop ：面向切面编程是oop的延续，所以从某些方面来讲aop比oop更强，aop主要用来处理业务中各个
- * 模块中的代码耦合，在内存中临时生成一个aop对象，其中包含了目标对象的所有方法
+ * ʲô��Aop ��
+ * aop ��������������oop�����������Դ�ĳЩ��������aop��oop��ǿ��aop��Ҫ��������ҵ���и���
+ * ģ���еĴ�����ϣ����ڴ�����ʱ����һ��aop�������а�����Ŀ���������з���
  * <p>
- * Aop的核心原理？
- * Aop主要是基于动态代理实现的，而aop的实现方式主要分为：jdk动态代理和CJLib代理技术，jdk动态代理是基于接口来实现的
- * 目标类必须实现业务接口，如果没有实现接口则采用CJLib动态代理技术基于子类的方式来实现，且目标类一定是子类对象，如果
- * 类对象被final修饰则不能采用CJLib代理技术
+ * Aop�ĺ���ԭ��
+ * Aop��Ҫ�ǻ��ڶ�̬����ʵ�ֵģ���aop��ʵ�ַ�ʽ��Ҫ��Ϊ��jdk��̬�����CJLib��������jdk��̬�����ǻ��ڽӿ���ʵ�ֵ�
+ * Ŀ�������ʵ��ҵ��ӿڣ����û��ʵ�ֽӿ������CJLib��̬��������������ķ�ʽ��ʵ�֣���Ŀ����һ��������������
+ * �����final�������ܲ���CJLib������
  * <p>
- * Aop能做什么？
- * 降低各个模块的耦合
- * 使系统容易扩展
- * 不需要修改源代码，对业务功能进行增强，且代码可重用
+ * Aop����ʲô��
+ * ���͸���ģ������
+ * ʹϵͳ������չ
+ * ����Ҫ�޸�Դ���룬��ҵ���ܽ�����ǿ���Ҵ��������
  * <p>
- * Aop的应用场景？
- * 在项目中Aop一般用来处理日志和事务管理
+ * Aop��Ӧ�ó�����
+ * ����Ŀ��Aopһ������������־���������
  */
+@SuppressWarnings("all")
 public class AopDemo {
 
     public static void main1(String[] args) {
@@ -33,10 +45,10 @@ public class AopDemo {
             for (int i = 0; i < 10000; i++) {
                 URLConnection connection = url.openConnection();
                 connection.connect();
-                System.out.println("执行次数-->" + i);
+                System.out.println("ִ�д���-->" + i);
             }
         } catch (Exception e) {
-            System.out.println("出错了!!!-->" + e.getMessage());
+            System.out.println("������!!!-->" + e.getMessage());
         }
     }
 
@@ -44,6 +56,36 @@ public class AopDemo {
 //        String str = "heiye.txt";
 //        System.out.println(str.substring(str.lastIndexOf(".") + 1));
         String str = "";
-        System.out.println(str.length());
+        //System.out.println(str.length());
+
+        //System.out.println(ClassLoader.getSystemClassLoader());
+/*
+
+        int k = 1, y = 1, j = 1;
+        for (int i = 9; i > 0; i--) {
+            k = y;
+            for (j = 1; j <= i; j++) {
+                int sum = j * k;
+                System.out.print(String.format("|%s * %s = %s%s|", j, k, sum, sum > 9 ? "" : " "));
+                k++;
+            }
+            y++;
+            System.out.println();
+        }
+*/
+
+
+    }
+
+    @Test
+    public void test(){
+        int num = 20;
+        if (((num - 1) & num ) == 0){
+            System.out.println("��2�Ľ�˷�");
+        }else {
+            System.out.println("���ǽٳַ�");
+            System.out.println("是否会乱码");
+        }
     }
 }
+
